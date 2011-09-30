@@ -19,7 +19,15 @@ ActionDispatch::Routing::RouteSet.class_eval do
 
   def add_filters(*names)
     options = names.extract_options!
-    names.each { |name| filters.unshift(RoutingFilter.build(name, options)) }
+    names.each do |name|
+      filter = RoutingFilter.build(name, options)
+      # clear out current filters of the same type
+      # This fixes double application of filters, which seems to happen
+      # when routes files are (re)loaded. This way, old filters with the same
+      # name are replaced with new / later declared ones.
+      filters.reject! { |f| f.class == filter.class }
+      filters.unshift(filter)
+    end
   end
 
   # def recognize_path_with_filtering(path, env = {})
